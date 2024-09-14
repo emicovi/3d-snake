@@ -92,6 +92,7 @@ function onKeyDown(event) {
             break;
         case 'p':
             autoPlay = !autoPlay;
+            updateAutoPlayStatus();
             if (autoPlay) {
                 autoPlayInterval = setInterval(autoPlayMove, 100);
             } else {
@@ -152,27 +153,73 @@ function endGame() {
 }
 
 function autoPlayMove() {
-    // Implement a simple pathfinding algorithm for auto-play mode
-    const directions = [
-        new THREE.Vector3(1, 0, 0),
-        new THREE.Vector3(-1, 0, 0),
-        new THREE.Vector3(0, 0, 1),
-        new THREE.Vector3(0, 0, -1)
-    ];
+    const openSet = [];
+    const closedSet = [];
+    const startNode = {
+        position: snakeSegments[0].position.clone(),
+        g: 0,
+        h: snakeSegments[0].position.distanceTo(foodPosition),
+        f: 0,
+        parent: null
+    };
+    startNode.f = startNode.g + startNode.h;
+    openSet.push(startNode);
 
-    let bestDirection = directions[0];
-    let minDistance = Infinity;
-
-    directions.forEach(direction => {
-        const newPosition = snakeSegments[0].position.clone().add(direction);
-        const distance = newPosition.distanceTo(foodPosition);
-        if (distance < minDistance && !checkCollision(newPosition)) {
-            minDistance = distance;
-            bestDirection = direction;
+    while (openSet.length > 0) {
+        let currentNode = openSet.reduce((a, b) => (a.f < b.f ? a : b));
+        if (currentNode.position.equals(foodPosition)) {
+            let path = [];
+            while (currentNode.parent) {
+                path.push(currentNode.position.clone().sub(currentNode.parent.position));
+                currentNode = currentNode.parent;
+            }
+            snakeDirection.copy(path.pop());
+            return;
         }
-    });
 
-    snakeDirection.copy(bestDirection);
+        openSet.splice(openSet.indexOf(currentNode), 1);
+        closedSet.push(currentNode);
+
+        const neighbors = [
+            new THREE.Vector3(1, 0, 0),
+            new THREE.Vector3(-1, 0, 0),
+            new THREE.Vector3(0, 0, 1),
+            new THREE.Vector3(0, 0, -1)
+        ];
+
+        neighbors.forEach(direction => {
+            const neighborPosition = currentNode.position.clone().add(direction);
+            if (checkCollision(neighborPosition) || closedSet.some(node => node.position.equals(neighborPosition))) {
+                return;
+            }
+
+            const g = currentNode.g + 1;
+            const h = neighborPosition.distanceTo(foodPosition);
+            const f = g + h;
+            const existingNode = openSet.find(node => node.position.equals(neighborPosition));
+
+            if (existingNode) {
+                if (g < existingNode.g) {
+                    existingNode.g = g;
+                    existingNode.f = f;
+                    existingNode.parent = currentNode;
+                }
+            } else {
+                openSet.push({
+                    position: neighborPosition,
+                    g,
+                    h,
+                    f,
+                    parent: currentNode
+                });
+            }
+        });
+    }
+}
+
+function updateAutoPlayStatus() {
+    const statusElement = document.getElementById('auto-play-status');
+    statusElement.innerText = `Auto-Play Mode: ${autoPlay ? 'ON' : 'OFF'}`;
 }
 
 init();

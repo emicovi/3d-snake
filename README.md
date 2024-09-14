@@ -19,7 +19,8 @@ This is a 3D Snake game built using Three.js. The game features a 3D game board 
 ## Auto-Play Mode
 
 - Press the 'P' key to toggle the auto-play mode on and off.
-- In auto-play mode, the snake will automatically navigate the game board, avoid obstacles, and seek out food using a pathfinding algorithm.
+- In auto-play mode, the snake will automatically navigate the game board, avoid obstacles, and seek out food using an advanced A* pathfinding algorithm.
+- The auto-play mode status is visually indicated in the UI by displaying a message "Auto-Play Mode: ON" or "Auto-Play Mode: OFF".
 
 ## How to Try the Game in a Web Browser
 
